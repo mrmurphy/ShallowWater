@@ -3,16 +3,16 @@
     Heavily helped by code from: Paul Lewis: http://aerotwist.com/
 */
 
-var cam, scene, renderer, geo, mesh, mat, projector;
-var CPs = []; // For accessing all of the points on the surface.
+var cam, scene, renderer, geo, mesh, mat, projector, grid;
 
 // Params to change simulation:
 var gridWidth = 50;
 var gridRes = 22;
+var viscosity = 1;
+var gravity = 0.1;
 
 init();
-// play();
-mainLoop();
+play();
 
 function init() {
     scene = new THREE.Scene();
@@ -23,25 +23,20 @@ function init() {
 
     grid = buildGrid(gridWidth, gridRes);
 
-    for (var i = grid.length - 1; i >= 0; i--) {
-        var p = grid[i];
-        if (p.left && p.right && p.above && p.below) {
-            p.setColor(new THREE.Color(0xff0000));
-        }
-    }
-
     // Set up rendering stuff:
     for (i = grid.length - 1; i >= 0; i--) {
         scene.add(grid[i]);
+        if (grid[i].edgeCell) {grid[i].setColor(new THREE.Color(0xE9D55E));}
     }
     cam.lookAt(new THREE.Vector3(0, 0, 0));
-    renderer = new THREE.CanvasRenderer();
+    renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     renderer.domElement.addEventListener('mouseup', onMouseUp, false);
 }
 
 function mainLoop() {
+    simulate(grid);
     renderer.render(scene, cam);
 }
 
@@ -76,6 +71,7 @@ function buildGrid(width, res){
         if ((i+1) % cols !== 0){ p.right = result[i+1]; } // If we're not the right column.
         if (i-cols >= 0){ p.above = result[i-cols]; } // If we're not the top row.
         if (i+cols <= range){ p.below = result[i+cols]; } // If we're not the top row.
+        if (p.left && p.right && p.above && p.below) {p.edgeCell = false;}
     }
 
     return result;
@@ -85,7 +81,7 @@ function buildGrid(width, res){
 function constructCell(position){
     this.scale = 2;
     this.geo = new THREE.PlaneGeometry(this.scale, this.scale, this.scale, this.scale);
-    this.mat = new THREE.MeshBasicMaterial({color: 0x0000ff, wireframe: false});
+    this.mat = new THREE.MeshBasicMaterial({color: 0xC53232, wireframe: false});
     this.mesh = new THREE.Mesh(this.geo, this.mat);
     this.mesh.position = new THREE.Vector3(position.x, position.y, position.z);
     this.mesh.velU = 0;
@@ -96,6 +92,7 @@ function constructCell(position){
     this.mesh.right = undefined;
     this.mesh.above = undefined;
     this.mesh.below = undefined;
+    this.mesh.edgeCell = true;
     this.mesh.setColor = function(color){
         this.material.color = color;
     };
@@ -106,8 +103,6 @@ function constructCell(position){
     return this.mesh;
 }
 
-/////
-/////
 ///// Events
 /////
 
@@ -115,10 +110,20 @@ function onMouseUp(event) {
     event.preventDefault();
 
     // Find the square I clicked on.
-    var mouseX = event.clientX;
-    var mouseY = event.clientY;
-    // Do the projecting.
-    var vector = THREE.Vector3(mouse.x, mouse.y, 0.5);
+    var mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+    var mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+    var vector = new THREE.Vector3(mouseX, mouseY, 0.5);
     projector.unprojectVector(vector, cam);
+    var ray = new THREE.Ray(cam.position, vector.subSelf(cam.position).normalize());
+    var hit = ray.intersectObjects(grid)[0];
+    if(hit){
+        hit.object.setCurH(5);
+    }
+}
+
+///// Simulation
+/////
+
+function simulate(mesh) {
 
 }
