@@ -1,5 +1,6 @@
 /* Author: Murphy Randle
     Just a very simple shallow water simulation.
+    Heavily helped by code from: Paul Lewis: http://aerotwist.com/
 */
 
 var cam, scene, renderer, geo, mesh, mat, projector;
@@ -10,7 +11,8 @@ var gridWidth = 50;
 var gridRes = 22;
 
 init();
-play();
+// play();
+mainLoop();
 
 function init() {
     scene = new THREE.Scene();
@@ -30,7 +32,7 @@ function init() {
 
     // Set up rendering stuff:
     for (i = grid.length - 1; i >= 0; i--) {
-        scene.add(grid[i].mesh);
+        scene.add(grid[i]);
     }
     cam.lookAt(new THREE.Vector3(0, 0, 0));
     renderer = new THREE.CanvasRenderer();
@@ -60,9 +62,9 @@ function buildGrid(width, res){
     // Make the points in space
     for (var i = cols - 1; i >= 0; i--) {
         for (var j = cols - 1; j >= 0; j--) {
-            var p = new controlPoint(startPos);
+            var p = constructCell(startPos);
             var change = new THREE.Vector3(cellSize * j, 0, cellSize * i);
-            p.mesh.position.addSelf(change);
+            p.position.addSelf(change);
             result.unshift(p);
         }
     }
@@ -80,29 +82,28 @@ function buildGrid(width, res){
 }
 
 // Define some objects to be used:
-function controlPoint(position){
+function constructCell(position){
     this.scale = 2;
     this.geo = new THREE.PlaneGeometry(this.scale, this.scale, this.scale, this.scale);
-    // this.geo.vertices.push(new THREE.Vector3(0,0,0));
     this.mat = new THREE.MeshBasicMaterial({color: 0x0000ff, wireframe: false});
-    // this.mat = new THREE.ParticleBasicMaterial({color: 0x0000ff, size: 5});
     this.mesh = new THREE.Mesh(this.geo, this.mat);
     this.mesh.position = new THREE.Vector3(position.x, position.y, position.z);
-    this.velU = 0;
-    this.velV = 0;
-    this.curH = this.mesh.position.y;
-    this.restH = 0;
-    this.left = undefined;
-    this.right = undefined;
-    this.above = undefined;
-    this.below = undefined;
-    this.setColor = function(color){
-        this.mat.color = color;
+    this.mesh.velU = 0;
+    this.mesh.velV = 0;
+    this.mesh.curH = this.mesh.position.y;
+    this.mesh.restH = 0;
+    this.mesh.left = undefined;
+    this.mesh.right = undefined;
+    this.mesh.above = undefined;
+    this.mesh.below = undefined;
+    this.mesh.setColor = function(color){
+        this.material.color = color;
     };
-    this.setCurH = function(h){
+    this.mesh.setCurH = function(h){
         this.curH = h;
-        this.mesh.position.y = h;
+        this.position.y = h;
     };
+    return this.mesh;
 }
 
 /////
@@ -111,8 +112,13 @@ function controlPoint(position){
 /////
 
 function onMouseUp(event) {
+    event.preventDefault();
+
     // Find the square I clicked on.
-    // event.preventDefault();
-    // var vector = THREE.Vector3(mouse.x, mouse.y, 0.5);
-    // projector.unprojectVector(vector, cam);
+    var mouseX = event.clientX;
+    var mouseY = event.clientY;
+    // Do the projecting.
+    var vector = THREE.Vector3(mouse.x, mouse.y, 0.5);
+    projector.unprojectVector(vector, cam);
+
 }
