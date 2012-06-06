@@ -7,13 +7,13 @@ var cam, scene, renderer, geo, mesh, mat, projector, grid;
 
 // Params to change simulation:
 var gridWidth = 65;
-var gridRes = 46;
+var gridRes = 58;
 var cellSize;
 var damp = 0.05;
 var gravity = 0.1;
-var time = 0.8;
-var pokePower = 4;
-var waterDepth = 1;
+var time = 1;
+var pokePower = 6;
+var waterDepth = 3;
 var subframes = 10;
 
 // Visually:
@@ -37,7 +37,7 @@ function init() {
     scene.add(cam);
 
     grid = buildGrid(gridWidth, gridRes);
-    poke(grid[(grid.length - 1) / 2]);
+    // poke(grid[(grid.length - 1) / 2]);
 
     // Set up rendering stuff:
     for (i = grid.length - 1; i >= 0; i--) {
@@ -97,7 +97,7 @@ function buildGrid(width, res){
 
 // Define some objects to be used:
 function constructCell(position){
-    this.scale = cellSize + 0.1 * cellSize;
+    this.scale = cellSize;
     // this.geo = new THREE.PlaneGeometry(this.scale, this.scale, 1, 1);
     this.geo = new THREE.SphereGeometry(this.scale, 4, 4);
     this.mat = new THREE.MeshBasicMaterial({color: 0xC53232, wireframe: false});
